@@ -1,8 +1,8 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useDrop } from 'react-dnd';
+import { Element } from './Element';
 import { useEditor } from './EditorContext';
 import styled from 'styled-components';
-import Element from './Element';
 
 const WorkspaceContainer = styled.div`
   position: relative;
@@ -12,7 +12,7 @@ const WorkspaceContainer = styled.div`
   border: ${(props) =>
     props.$isOver ? '2px dashed #1976d2' : '1px solid #ddd'};
   min-height: 500px;
-  overflow: hidden;
+  overflow: auto;
   flex: 1;
   margin: 10px;
 `;
@@ -20,50 +20,52 @@ const WorkspaceContainer = styled.div`
 const Workspace = () => {
   const {
     state: { elements },
-    actions,
+    actions, // Исправлено: actions доступны
   } = useEditor();
   const containerRef = useRef(null);
 
+  // Для добавления новых элементов
   const [{ isOver }, drop] = useDrop({
-    accept: ['element', 'existing-element'],
+    accept: 'new-element',
     drop: (item, monitor) => {
       const offset = monitor.getClientOffset();
-      const rect = containerRef.current?.getBoundingClientRect();
+      const rect = containerRef.current.getBoundingClientRect();
+      const scrollLeft = containerRef.current.scrollLeft || 0;
+      const scrollTop = containerRef.current.scrollTop || 0;
 
-      if (!rect || !offset) return; // Проверка на null
+      const x = offset.x - rect.left + scrollLeft - 50;
+      const y = offset.y - rect.top + scrollTop - 20;
 
-      if (item.type === 'element') {
-        // Добавление нового элемента
-        actions.addElement(item.type, {
-          x: offset.x - rect.left,
-          y: offset.y - rect.top,
-        });
-      } else {
-        // Перемещение существующего элемента
-        actions.moveElement(item.id, {
-          x: offset.x - rect.left,
-          y: offset.y - rect.top,
-        });
-      }
+      actions.addElement(item.type, { x, y }); // Используем actions.addElement
     },
-    collect: (monitor) => ({
-      isOver: monitor.isOver(),
-    }),
+    collect: (monitor) => ({ isOver: monitor.isOver() }),
+  });
+
+  // Для перемещения существующих элементов
+  const [, dropExisting] = useDrop({
+    accept: 'existing-element',
+    hover: (item, monitor) => {
+      const offset = monitor.getClientOffset();
+      if (!offset || !containerRef.current) return;
+
+      const rect = containerRef.current.getBoundingClientRect();
+      const scrollLeft = containerRef.current.scrollLeft || 0;
+      const scrollTop = containerRef.current.scrollTop || 0;
+
+      const x = offset.x - rect.left + scrollLeft;
+      const y = offset.y - rect.top + scrollTop;
+
+      actions.moveElement(item.id, { x, y }); // Используем actions.moveElement
+    },
   });
 
   drop(containerRef);
-
-  const handleMove = useCallback(
-    (id, position) => {
-      actions.moveElement(id, position);
-    },
-    [actions]
-  );
+  dropExisting(containerRef);
 
   return (
     <WorkspaceContainer ref={containerRef} $isOver={isOver}>
       {elements.map((element) => (
-        <Element key={element.id} {...element} onMove={handleMove} />
+        <Element key={element.id} {...element} />
       ))}
     </WorkspaceContainer>
   );

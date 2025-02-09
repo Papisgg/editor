@@ -1,5 +1,6 @@
 import React from 'react';
 import { useDrag, useDrop } from 'react-dnd';
+import { usePreview } from 'react-dnd-preview';
 import { useEditor } from './EditorContext';
 import styled from 'styled-components';
 import PropTypes from 'prop-types';
@@ -8,19 +9,11 @@ const ElementContainer = styled.div`
   position: absolute;
   left: ${(props) => props.$x}px;
   top: ${(props) => props.$y}px;
-  border: ${(props) =>
-    props.$isSelected ? '2px solid #1976d2' : '1px solid transparent'};
-  padding: 8px;
-  margin: 4px 0;
-  cursor: move;
-  transition: border-color 0.2s;
-  background: ${(props) => props.$background};
-
-  &:hover {
-    border-color: #90caf9;
-  }
+  /* Уберите transform и transition */
+  margin: 0;
+  padding: 0;
+  z-index: ${(props) => (props.$isDragging ? 1000 : 1)};
 `;
-
 const ResizeHandle = styled.div`
   position: absolute;
   width: 12px;
@@ -34,32 +27,54 @@ const ResizeHandle = styled.div`
   transition: opacity 0.2s;
 `;
 
-const Element = ({ id, type, props: elementProps, position, onMove }) => {
+// Кастомный превью для перетаскивания
+export const CustomDragPreview = () => {
+  const { display, item, style } = usePreview();
+  if (!display) return null;
+  return (
+    <div
+      style={{
+        ...style,
+        position: 'fixed',
+        pointerEvents: 'none',
+        zIndex: 1000,
+        opacity: 0.8,
+      }}
+    >
+      {renderElement(item.type, item.props)}
+    </div>
+  );
+};
+
+const Element = React.memo(({ id, type, props, position }) => {
   const {
     state: { selectedElementId },
-    actions,
+    actions: { selectElement, moveElement },
   } = useEditor();
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'existing-element',
-    item: { id, position },
+    item: { id, type, props, position },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
+    previewOptions: {
+      captureDraggingState: false, // Отключаем встроенный превью
+    },
   }));
 
   const [, drop] = useDrop({
     accept: 'existing-element',
-    hover: (item) => {
-      if (item.id !== id) {
-        onMove(item.id, position);
-      }
+    hover: (item, monitor) => {
+      const offset = monitor.getClientOffset();
+      if (!offset || item.id === id) return;
+      moveElement(item.id, { x: offset.x, y: offset.y });
     },
   });
 
   const handleSelect = (e) => {
     e.stopPropagation();
-    actions.selectElement(id);
+    selectElement(id);
   };
 
   return (
@@ -69,20 +84,19 @@ const Element = ({ id, type, props: elementProps, position, onMove }) => {
       $x={position.x}
       $y={position.y}
       $background={type === 'image' ? 'transparent' : 'white'}
+      $isDragging={isDragging}
       onClick={handleSelect}
-      style={{ opacity: isDragging ? 0.5 : 1 }}
     >
-      {renderElement(type, elementProps)}
+      {renderElement(type, props)}
       <ResizeHandle
         $visible={selectedElementId === id}
-        onMouseDown={(e) => {
-          e.stopPropagation();
-          // Реализация изменения размера может быть добавлена здесь
-        }}
+        onMouseDown={(e) => e.stopPropagation()}
       />
     </ElementContainer>
   );
-};
+});
+
+Element.displayName = 'Element';
 
 Element.propTypes = {
   id: PropTypes.string.isRequired,
@@ -92,7 +106,6 @@ Element.propTypes = {
     x: PropTypes.number,
     y: PropTypes.number,
   }).isRequired,
-  onMove: PropTypes.func.isRequired,
 };
 
 const renderElement = (type, props) => {
@@ -124,4 +137,4 @@ const renderElement = (type, props) => {
   }
 };
 
-export default React.memo(Element);
+export { Element };

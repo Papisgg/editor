@@ -1,26 +1,36 @@
 import React from 'react';
 import { useDrag } from 'react-dnd';
+import { getDefaultProps } from './EditorContext';
 
 const Toolbar = () => {
   const [{ isDragging: isTextDragging }, textDrag] = useDrag(() => ({
-    type: 'element',
-    item: { type: 'text' },
+    type: 'new-element',
+    item: {
+      type: 'text',
+      props: getDefaultProps('text'),
+    },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
   }));
 
   const [{ isDragging: isButtonDragging }, buttonDrag] = useDrag(() => ({
-    type: 'element',
-    item: { type: 'button' },
+    type: 'new-element',
+    item: {
+      type: 'button',
+      props: getDefaultProps('button'),
+    },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),
   }));
 
   const [{ isDragging: isImageDragging }, imageDrag] = useDrag(() => ({
-    type: 'element',
-    item: { type: 'image' },
+    type: 'new-element',
+    item: {
+      type: 'image',
+      props: getDefaultProps('image'),
+    },
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),

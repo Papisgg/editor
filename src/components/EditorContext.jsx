@@ -76,29 +76,12 @@ const baseReducer = (state, action) => {
         selectedElementId: action.payload,
       };
     }
-    case 'UPDATE_ELEMENT': {
-      return {
-        ...state,
-        elements: state.elements.map((el) =>
-          el.id === action.payload.id
-            ? {
-                ...el,
-                ...action.payload.updates,
-                position: action.payload.position || el.position,
-              }
-            : el
-        ),
-      };
-    }
     case 'MOVE_ELEMENT': {
       return {
         ...state,
         elements: state.elements.map((el) =>
           el.id === action.payload.id
-            ? {
-                ...el,
-                position: action.payload.position,
-              }
+            ? { ...el, position: action.payload.position }
             : el
         ),
       };
@@ -120,13 +103,6 @@ export const EditorProvider = ({ children }) => {
     });
   }, []);
 
-  const updateElement = useCallback((id, updates) => {
-    dispatch({
-      type: 'UPDATE_ELEMENT',
-      payload: { id, updates },
-    });
-  }, []);
-
   const moveElement = useCallback((id, position) => {
     dispatch({
       type: 'MOVE_ELEMENT',
@@ -138,7 +114,6 @@ export const EditorProvider = ({ children }) => {
     state,
     actions: {
       addElement,
-      updateElement,
       moveElement,
       undo: () => dispatch({ type: 'UNDO' }),
       redo: () => dispatch({ type: 'REDO' }),
@@ -147,7 +122,7 @@ export const EditorProvider = ({ children }) => {
   };
 
   return (
-    <EditorContext.Provider value={value}> {children} </EditorContext.Provider>
+    <EditorContext.Provider value={value}>{children}</EditorContext.Provider>
   );
 };
 
@@ -163,7 +138,7 @@ export const useEditor = () => {
   return context;
 };
 
-const getDefaultProps = (type) => {
+export const getDefaultProps = (type) => {
   const defaults = {
     text: {
       content: 'Новый текст',
