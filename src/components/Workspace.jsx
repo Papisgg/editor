@@ -24,17 +24,19 @@ const Workspace = () => {
   } = useEditor();
   const containerRef = useRef(null);
 
-  const [, drop] = useDrop({
+  const [{ isOver }, drop] = useDrop({
     accept: ['element', 'existing-element'],
     drop: (item, monitor) => {
       const offset = monitor.getClientOffset();
-      const rect = containerRef.current.getBoundingClientRect();
+      const rect = containerRef.current?.getBoundingClientRect();
+
+      if (!rect || !offset) return; // Проверка на null
 
       if (item.type === 'element') {
         // Добавление нового элемента
         actions.addElement(item.type, {
-          x: offset.x - rect.left - 50,
-          y: offset.y - rect.top - 20,
+          x: offset.x - rect.left,
+          y: offset.y - rect.top,
         });
       } else {
         // Перемещение существующего элемента
@@ -44,6 +46,9 @@ const Workspace = () => {
         });
       }
     },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
   });
 
   drop(containerRef);
@@ -56,7 +61,7 @@ const Workspace = () => {
   );
 
   return (
-    <WorkspaceContainer ref={containerRef}>
+    <WorkspaceContainer ref={containerRef} $isOver={isOver}>
       {elements.map((element) => (
         <Element key={element.id} {...element} onMove={handleMove} />
       ))}
