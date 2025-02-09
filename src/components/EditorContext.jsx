@@ -94,13 +94,11 @@ const baseReducer = (state, action) => {
       return {
         ...state,
         elements: state.elements.map((el) =>
-          el.id === action.payload.id
-            ? {
-                ...el,
-                position: action.payload.position,
-              }
-            : el
-        ),
+          el.id === action.payload.id ? {
+            ...el,
+            position: action.payload.position
+          } : el
+        )
       };
     }
     default:
