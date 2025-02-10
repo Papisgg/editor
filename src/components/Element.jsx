@@ -1,19 +1,17 @@
-import React from 'react';
-import { useDrag, useDrop } from 'react-dnd';
-import { usePreview } from 'react-dnd-preview';
+import React, { useCallback } from 'react';
+import { useDrag } from 'react-dnd';
 import { useEditor } from './EditorContext';
 import styled from 'styled-components';
-import PropTypes from 'prop-types';
 
 const ElementContainer = styled.div`
   position: absolute;
   left: ${(props) => props.$x}px;
   top: ${(props) => props.$y}px;
-  /* Уберите transform и transition */
-  margin: 0;
-  padding: 0;
-  z-index: ${(props) => (props.$isDragging ? 1000 : 1)};
+  cursor: move;
+  opacity: ${(props) => (props.$isDragging ? 0.5 : 1)};
+  transition: none;
 `;
+
 const ResizeHandle = styled.div`
   position: absolute;
   width: 12px;
@@ -25,36 +23,26 @@ const ResizeHandle = styled.div`
   border-radius: 2px;
   opacity: ${(props) => (props.$visible ? 1 : 0)};
   transition: opacity 0.2s;
-  &:active {
-    background: #0d47a1;
-  }
 `;
 
-// Кастомный превью для перетаскивания
-export const CustomDragPreview = () => {
-  const { display, item, style } = usePreview();
-  if (!display) return null;
-  return (
-    <div
-      style={{
-        ...style,
-        position: 'fixed',
-        pointerEvents: 'none',
-        zIndex: 1000,
-        opacity: 0.8,
-      }}
-    >
-      {renderElement(item.type, item.props)}
-    </div>
-  );
-};
+const Element = ({ id, type, props, position }) => {
+  const {
+    state: { selectedElementId },
+    actions,
+  } = useEditor();
 
-const Element = React.memo(({ id, type, props, position }) => {
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: 'existing-element',
+    item: { id, position },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+  }));
+
   const handleResize = useCallback(
     (e) => {
       e.preventDefault();
       const startX = e.clientX;
-      const startY = e.clientY;
       const startWidth = props.width || 150;
 
       const onMouseMove = (e) => {
@@ -73,94 +61,20 @@ const Element = React.memo(({ id, type, props, position }) => {
     [actions, id, props.width]
   );
 
-  const {
-    state: { selectedElementId },
-    actions: { selectElement, moveElement },
-  } = useEditor();
-
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'existing-element',
-    item: { id, type, props, position },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
-    }),
-    previewOptions: {
-      captureDraggingState: false, // Отключаем встроенный превью
-    },
-  }));
-
-  const [, drop] = useDrop({
-    accept: 'existing-element',
-    hover: (item, monitor) => {
-      const offset = monitor.getClientOffset();
-      if (!offset || item.id === id) return;
-      moveElement(item.id, { x: offset.x, y: offset.y });
-    },
-  });
-
-  const handleSelect = (e) => {
-    e.stopPropagation();
-    selectElement(id);
-  };
-
   return (
     <ElementContainer
-      ref={(node) => drag(drop(node))}
-      $isSelected={selectedElementId === id}
+      ref={drag}
       $x={position.x}
       $y={position.y}
-      $background={type === 'image' ? 'transparent' : 'white'}
       $isDragging={isDragging}
-      onClick={handleSelect}
     >
-      {renderElement(type, props)}
+      {/* Ваш рендер элемента */}
       <ResizeHandle
         $visible={selectedElementId === id}
         onMouseDown={handleResize}
       />
     </ElementContainer>
   );
-});
-
-Element.displayName = 'Element';
-
-Element.propTypes = {
-  id: PropTypes.string.isRequired,
-  type: PropTypes.oneOf(['text', 'button', 'image']).isRequired,
-  props: PropTypes.object.isRequired,
-  position: PropTypes.shape({
-    x: PropTypes.number,
-    y: PropTypes.number,
-  }).isRequired,
 };
 
-const renderElement = (type, props) => {
-  switch (type) {
-    case 'text':
-      return (
-        <div style={{ fontSize: props.fontSize, color: props.color }}>
-          {props.content}
-        </div>
-      );
-    case 'button':
-      return (
-        <button
-          style={{
-            backgroundColor: props.bgColor,
-            color: props.color,
-            width: props.width,
-          }}
-        >
-          {props.label}
-        </button>
-      );
-    case 'image':
-      return (
-        <img src={props.src} alt="Element" style={{ width: props.width }} />
-      );
-    default:
-      return null;
-  }
-};
-
-export { Element };
+export default Element;

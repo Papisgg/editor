@@ -1,10 +1,4 @@
-import React, {
-  createContext,
-  useContext,
-  useReducer,
-  useCallback,
-} from 'react';
-import PropTypes from 'prop-types';
+import React, { createContext, useContext, useReducer, useCallback } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 const EditorContext = createContext();
@@ -40,23 +34,6 @@ const historyMiddleware = (reducer) => (state, action) => {
         },
       };
     }
-    case 'UPDATE_ELEMENT':
-      {
-        return {
-          ...state,
-          elements: state.elements.map((el) =>
-            el.id === action.payload.id
-              ? { ...el, props: { ...el.props, ...action.payload.updates } }
-              : el
-          ),
-        };
-      }
-
-      // Добавим в EditorProvider
-      const updateElement = useCallback((id, updates) => {
-        dispatch({ type: 'UPDATE_ELEMENT', payload: { id, updates } });
-      }, []);
-
     default: {
       const newState = reducer(state, action);
       return {
@@ -93,6 +70,15 @@ const baseReducer = (state, action) => {
         selectedElementId: action.payload,
       };
     }
+    case 'UPDATE_ELEMENT': {
+      const { id, updates } = action.payload;
+      return {
+        ...state,
+        elements: state.elements.map((el) =>
+          el.id === id ? { ...el, props: { ...el.props, ...updates } } : el
+        ),
+      };
+    }
     case 'MOVE_ELEMENT': {
       return {
         ...state,
@@ -120,6 +106,13 @@ export const EditorProvider = ({ children }) => {
     });
   }, []);
 
+  const updateElement = useCallback((id, updates) => {
+    dispatch({
+      type: 'UPDATE_ELEMENT',
+      payload: { id, updates },
+    });
+  }, []);
+
   const moveElement = useCallback((id, position) => {
     dispatch({
       type: 'MOVE_ELEMENT',
@@ -131,6 +124,7 @@ export const EditorProvider = ({ children }) => {
     state,
     actions: {
       addElement,
+      updateElement,
       moveElement,
       undo: () => dispatch({ type: 'UNDO' }),
       redo: () => dispatch({ type: 'REDO' }),
@@ -143,10 +137,6 @@ export const EditorProvider = ({ children }) => {
   );
 };
 
-EditorProvider.propTypes = {
-  children: PropTypes.node.isRequired,
-};
-
 export const useEditor = () => {
   const context = useContext(EditorContext);
   if (!context) {
@@ -155,7 +145,7 @@ export const useEditor = () => {
   return context;
 };
 
-export const getDefaultProps = (type) => {
+const getDefaultProps = (type) => {
   const defaults = {
     text: {
       content: 'Новый текст',
