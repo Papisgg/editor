@@ -25,7 +25,7 @@ const ResizeHandle = styled.div`
   transition: opacity 0.2s;
 `;
 
-const Element = ({ id, type, props, position }) => {
+const Element = ({ id, props, position }) => {
   const {
     state: { selectedElementId },
     actions,
