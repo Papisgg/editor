@@ -49,6 +49,17 @@ const SettingsPanel = () => {
         </>
       )}
 
+      {selectedElement.type === 'button' && (
+        <label>
+          Текст кнопки:
+          <input
+            type="text"
+            value={selectedElement.props.label}
+            onChange={(e) => handleChange('label', e.target.value)}
+          />
+        </label>
+      )}
+
       <label>
         Цвет фона:
         <input

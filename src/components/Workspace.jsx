@@ -20,11 +20,10 @@ const WorkspaceContainer = styled.div`
 const Workspace = () => {
   const {
     state: { elements },
-    actions, // Исправлено: actions доступны
+    actions,
   } = useEditor();
   const containerRef = useRef(null);
 
-  // Для добавления новых элементов
   const [{ isOver }, drop] = useDrop({
     accept: 'new-element',
     drop: (item, monitor) => {
@@ -33,15 +32,14 @@ const Workspace = () => {
       const scrollLeft = containerRef.current.scrollLeft || 0;
       const scrollTop = containerRef.current.scrollTop || 0;
 
-      const x = offset.x - rect.left + scrollLeft - 50;
-      const y = offset.y - rect.top + scrollTop - 20;
+      const x = offset.x - rect.left + scrollLeft;
+      const y = offset.y - rect.top + scrollTop;
 
-      actions.addElement(item.type, { x, y }); // Используем actions.addElement
+      actions.addElement(item.type, { x, y });
     },
     collect: (monitor) => ({ isOver: monitor.isOver() }),
   });
 
-  // Для перемещения существующих элементов
   const [, dropExisting] = useDrop({
     accept: 'existing-element',
     hover: (item, monitor) => {
@@ -55,7 +53,7 @@ const Workspace = () => {
       const x = offset.x - rect.left + scrollLeft;
       const y = offset.y - rect.top + scrollTop;
 
-      actions.moveElement(item.id, { x, y }); // Используем actions.moveElement
+      actions.moveElement(item.id, { x, y });
     },
   });
 

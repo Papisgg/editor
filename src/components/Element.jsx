@@ -10,6 +10,8 @@ const ElementContainer = styled.div`
   cursor: move;
   opacity: ${(props) => (props.$isDragging ? 0.5 : 1)};
   transition: none;
+  border: ${(props) =>
+    props.$isSelected ? '2px solid #1976d2' : '1px solid transparent'};
 `;
 
 const ResizeHandle = styled.div`
@@ -28,7 +30,7 @@ const ResizeHandle = styled.div`
 const Element = ({ id, props, position }) => {
   const {
     state: { selectedElementId },
-    actions,
+    actions: { selectElement, updateElement }, // Добавьте updateElement в деструктуризацию
   } = useEditor();
 
   const [{ isDragging }, drag] = useDrag(() => ({
@@ -39,6 +41,14 @@ const Element = ({ id, props, position }) => {
     }),
   }));
 
+  const handleClick = useCallback(
+    (e) => {
+      e.stopPropagation();
+      selectElement(id);
+    },
+    [selectElement, id]
+  );
+
   const handleResize = useCallback(
     (e) => {
       e.preventDefault();
@@ -47,7 +57,7 @@ const Element = ({ id, props, position }) => {
 
       const onMouseMove = (e) => {
         const newWidth = startWidth + (e.clientX - startX);
-        actions.updateElement(id, { width: Math.max(50, newWidth) });
+        updateElement(id, { width: Math.max(50, newWidth) }); // Используйте updateElement вместо actions.updateElement
       };
 
       const onMouseUp = () => {
@@ -58,7 +68,7 @@ const Element = ({ id, props, position }) => {
       window.addEventListener('mousemove', onMouseMove);
       window.addEventListener('mouseup', onMouseUp);
     },
-    [actions, id, props.width]
+    [updateElement, id, props.width]
   );
 
   return (
@@ -67,8 +77,22 @@ const Element = ({ id, props, position }) => {
       $x={position.x}
       $y={position.y}
       $isDragging={isDragging}
+      $isSelected={selectedElementId === id}
+      onClick={handleClick}
     >
-      {/* Ваш рендер элемента */}
+      {props.content && <div>{props.content}</div>}
+      {props.label && (
+        <button
+          style={{
+            backgroundColor: props.bgColor,
+            color: props.color,
+            width: props.width,
+          }}
+        >
+          {props.label}
+        </button>
+      )}
+      {props.src && <img src={props.src} alt="element" width={props.width} />}
       <ResizeHandle
         $visible={selectedElementId === id}
         onMouseDown={handleResize}
