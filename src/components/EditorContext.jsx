@@ -1,4 +1,9 @@
-import React, { createContext, useContext, useReducer, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useReducer,
+  useCallback,
+} from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 const EditorContext = createContext();
@@ -145,7 +150,7 @@ export const useEditor = () => {
   return context;
 };
 
-const getDefaultProps = (type) => {
+export const getDefaultProps = (type) => {
   const defaults = {
     text: {
       content: 'Новый текст',

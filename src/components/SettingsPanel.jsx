@@ -11,7 +11,9 @@ const Panel = styled.div`
 
 const SettingsPanel = () => {
   const { state, actions } = useEditor();
-  const selectedElement = state.elements.find(el => el.id === state.selectedElementId);
+  const selectedElement = state.elements.find(
+    (el) => el.id === state.selectedElementId
+  );
 
   if (!selectedElement) return <Panel>Выберите элемент</Panel>;
 
@@ -22,7 +24,7 @@ const SettingsPanel = () => {
   return (
     <Panel>
       <h3>Настройки элемента</h3>
-      
+
       {selectedElement.type === 'text' && (
         <>
           <label>
@@ -33,13 +35,15 @@ const SettingsPanel = () => {
               onChange={(e) => handleChange('content', e.target.value)}
             />
           </label>
-          
+
           <label>
             Размер шрифта:
             <input
               type="number"
               value={selectedElement.props.fontSize}
-              onChange={(e) => handleChange('fontSize', parseInt(e.target.value))}
+              onChange={(e) =>
+                handleChange('fontSize', parseInt(e.target.value))
+              }
             />
           </label>
         </>
@@ -59,7 +63,9 @@ const SettingsPanel = () => {
         <input
           type="number"
           value={selectedElement.props.borderWidth || 0}
-          onChange={(e) => handleChange('borderWidth', parseInt(e.target.value))}
+          onChange={(e) =>
+            handleChange('borderWidth', parseInt(e.target.value))
+          }
         />
         <input
           type="color"
