@@ -25,6 +25,9 @@ const ResizeHandle = styled.div`
   border-radius: 2px;
   opacity: ${(props) => (props.$visible ? 1 : 0)};
   transition: opacity 0.2s;
+  &:active {
+    background: #0d47a1;
+  }
 `;
 
 // Кастомный превью для перетаскивания
@@ -47,6 +50,29 @@ export const CustomDragPreview = () => {
 };
 
 const Element = React.memo(({ id, type, props, position }) => {
+  const handleResize = useCallback(
+    (e) => {
+      e.preventDefault();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startWidth = props.width || 150;
+
+      const onMouseMove = (e) => {
+        const newWidth = startWidth + (e.clientX - startX);
+        actions.updateElement(id, { width: Math.max(50, newWidth) });
+      };
+
+      const onMouseUp = () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
+      };
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    },
+    [actions, id, props.width]
+  );
+
   const {
     state: { selectedElementId },
     actions: { selectElement, moveElement },
@@ -90,7 +116,7 @@ const Element = React.memo(({ id, type, props, position }) => {
       {renderElement(type, props)}
       <ResizeHandle
         $visible={selectedElementId === id}
-        onMouseDown={(e) => e.stopPropagation()}
+        onMouseDown={handleResize}
       />
     </ElementContainer>
   );

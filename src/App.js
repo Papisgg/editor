@@ -15,6 +15,7 @@ function App() {
       <AppContainer>
         <Toolbar />
         <Workspace />
+        <SettingsPanel />
       </AppContainer>
     </EditorProvider>
   );

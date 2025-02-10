@@ -40,6 +40,23 @@ const historyMiddleware = (reducer) => (state, action) => {
         },
       };
     }
+    case 'UPDATE_ELEMENT':
+      {
+        return {
+          ...state,
+          elements: state.elements.map((el) =>
+            el.id === action.payload.id
+              ? { ...el, props: { ...el.props, ...action.payload.updates } }
+              : el
+          ),
+        };
+      }
+
+      // Добавим в EditorProvider
+      const updateElement = useCallback((id, updates) => {
+        dispatch({ type: 'UPDATE_ELEMENT', payload: { id, updates } });
+      }, []);
+
     default: {
       const newState = reducer(state, action);
       return {
